@@ -1,4 +1,8 @@
+import string
+import secrets
 import qrcode
+import tempfile
+import pyzipper
 from pathlib import Path
 
 class ConfigDelivery:
@@ -25,33 +29,62 @@ class ConfigDelivery:
         if self.config and not self.file and not self.email:
             self.print_output = True
 
-    def generate_qr_code(self) -> qrcode.QRCode:
+    def __generate_qr_code(self) -> qrcode.QRCode:
         qr = qrcode.QRCode()
         qr.add_data(self.client_config)
         qr.make(fit=True)
         return qr
 
+    def __generate_random_password(self, length: int = 10) -> str:
+        alphabet = string.ascii_letters + string.digits + string.punctuation
+        return ''.join(secrets.choice(alphabet) for _ in range(length))
+
+    def __file_name_format(self, name: str) -> str:
+        return name.replace(".", "_").replace("/", "_")
+    
+    def __create_config_file(self, path: Path, name: str, config: str):
+        with open(path / f"{self.__file_name_format(name)}.conf", "w") as f:
+            f.write(config)
+
+    def __create_qr_code_file(self, path: Path, name: str, qr: qrcode.QRCode):
+        img = qr.make_image(fill_color="black", back_color="white")
+        img.save(path / f"{self.__file_name_format(name)}.png")
+
+    def __create_zip_file(self, path: Path) -> (str, str):
+        password = self.__generate_random_password()
+        zip_file_name = f"{self.__file_name_format(self.address)}.zip"
+        with pyzipper.AESZipFile(path / zip_file_name, 
+            "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as zf:
+            zf.setpassword(password.encode())
+            for file in Path(path).iterdir():
+                if file.is_file() and file.name != zip_file_name:
+                    zf.write(file, arcname=file.name)
+        return password, path / zip_file_name
+
+
     def deliver(self):
         if self.qr:
-            qr = self.generate_qr_code()
-            # Display the qr code to screen if we are not sending to file or email
+            qr = self.__generate_qr_code()
             if self.print_output:
+                print("Client QR Code:")
                 qr.print_ascii(invert=True)
         if self.config:
-            # Display the client config to screen if we are not sending to file or email
-            if (not self.file and not self.email) or self.print_output:
+            if self.print_output:
+                print("Client Config:")
                 print(self.client_config)
         if self.file:
             config_dir = Path.home() / ".config" / "wg_client_config_generator" / "configs"
             if self.config:
-                with open(config_dir / f"{self.address}.conf", "w") as f:
-                    f.write(self.client_config)
-                if self.print_output:
-                    print(self.client_config)
+                self.__create_config_file(config_dir, self.address, self.client_config)
             if self.qr:
-                img = qr.make_image(fill_color="black", back_color="white")
-                img.save(config_dir / f"{self.address}.png")
-                if self.print_output:
-                    qr.print_ascii(invert=True)
+                self.__create_qr_code_file(config_dir, self.address, qr)
+        # For email, files will always be be encrypted and the password separated from the actual email
         if self.email:
-            pass
+            with tempfile.TemporaryDirectory() as temp_dir:
+                temp_dir = Path(temp_dir)
+                if self.config:
+                    self.__create_config_file(temp_dir, self.address, self.client_config)
+                if self.qr:
+                    self.__create_qr_code_file(temp_dir, self.address, qr)
+                password, path = self.__create_zip_file(temp_dir)
+                print(password, path)
