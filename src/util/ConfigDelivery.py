@@ -14,19 +14,19 @@ class ConfigDelivery:
         self.config = kwargs.get("config")
         self.file = kwargs.get("file")
         self.email = kwargs.get("email")
-        self.print = kwargs.get("print")
+        self.print_output = kwargs.get("print_output")
 
     def __default_delivery(self):
         # If nothing is provided, set qr to True to display the qr code to the screen
         if not self.qr and not self.config and not self.file and not self.email:
             self.qr = True
-            self.print = True
+            self.print_output = True
         # If qr is provided, and file or email are not, set print to True
         if self.qr and not self.file and not self.email:
-            self.print = True
+            self.print_output = True
         # If config is provided, and file or email are not, set print to True
         if self.config and not self.file and not self.email:
-            self.print = True
+            self.print_output = True
 
     def generate_qr_code(self) -> qrcode.QRCode:
         qr = qrcode.QRCode()
@@ -42,22 +42,22 @@ class ConfigDelivery:
         if self.qr:
             qr = self.generate_qr_code()
             # Display the qr code to screen if we are not sending to file or email
-            if self.print:
+            if self.print_output:
                 qr.print_ascii()
         if self.config:
             # Display the client config to screen if we are not sending to file or email
-            if (not self.file and not self.email) or self.print:
+            if (not self.file and not self.email) or self.print_output:
                 print(self.client_config)
         if self.file:
             if self.config:
                 with open(self.get_config_path(f"{self.address}.conf"), "w") as f:
                     f.write(self.client_config)
-                if self.print:
+                if self.print_output:
                     print(self.client_config)
             if self.qr:
                 img = qr.make_image(fill_color="black", back_color="white")
                 img.save(self.get_config_path(f"{self.address}.png"))
-                if self.print:
+                if self.print_output:
                     qr.print_ascii()
         if self.email:
             pass

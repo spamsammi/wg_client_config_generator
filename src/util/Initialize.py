@@ -22,7 +22,7 @@ PrivateKey = {{privatekey}}
 
 [Peer]
 PublicKey = {{publickey}}""")
-        print(f"Templates directory created: {templates_dir}")
+            print(f"Templates directory created: {templates_dir}")
 
         # Create configs directory if it doesn't exist
         configs_dir = config_dir / "configs"
