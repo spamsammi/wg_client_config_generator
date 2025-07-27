@@ -2,7 +2,7 @@ import string
 import secrets
 import qrcode
 import tempfile
-import pyzipper
+import zipfile
 from pathlib import Path
 
 class ConfigDelivery:
@@ -50,11 +50,11 @@ class ConfigDelivery:
         img = qr.make_image(fill_color="black", back_color="white")
         img.save(path / f"{self.__file_name_format(name)}.png")
 
+    # This encyprtion is not very secure, but it's good enough for our use case to just temporarily transfer the config files via email
     def __create_zip_file(self, path: Path) -> (str, str):
         password = self.__generate_random_password()
         zip_file_name = f"{self.__file_name_format(self.address)}.zip"
-        with pyzipper.AESZipFile(path / zip_file_name, 
-            "w", compression=pyzipper.ZIP_DEFLATED, encryption=pyzipper.WZ_AES) as zf:
+        with zipfile.ZipFile(path / zip_file_name, "w", compression=zipfile.ZIP_DEFLATED) as zf:
             zf.setpassword(password.encode())
             for file in Path(path).iterdir():
                 if file.is_file() and file.name != zip_file_name:
