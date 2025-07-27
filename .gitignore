@@ -1,2 +1,3 @@
 __pycache__/
-templates/default.jinja2
+configs/
+*.jinja2
