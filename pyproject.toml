@@ -1,0 +1,10 @@
+[project]
+name = "wg-client-config-generator"
+version = "0.1.0"
+description = "Generates config ready for for mobile or desktop wireguard clients"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "click>=8.2.1",
+    "jinja2>=3.1.6",
+]
