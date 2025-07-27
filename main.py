@@ -1,8 +1,9 @@
 import os
 import click
 from pathlib import Path
-from src.wg.WireguardConfig import WireguardConfig
 from jinja2 import Environment, FileSystemLoader, Template
+from src.wg.WireguardConfig import WireguardConfig
+from src.util.ConfigDelivery import ConfigDelivery
 
 def render_template(template_file: str, address: str, private_key: str, public_key: str) -> Template:
     try:
@@ -31,8 +32,9 @@ def render_template(template_file: str, address: str, private_key: str, public_k
 @click.option("-p", "--print-output", is_flag=True, required=False, default=False, help="Print the QR code and/or client config to stdout regardless of other options")
 def main(address: str, interface: str, template: str, qr: bool, config: bool, file: bool, email: str | None, print_output: bool):
     private_key, public_key = WireguardConfig.generate_wg_keypair()
-    config = render_template(template, address, private_key, public_key)
-    print(config)
+    client_config = render_template(template, address, private_key, public_key)
+    config_delivery = ConfigDelivery(client_config, address=address, qr=qr, config=config, file=file, email=email, print_output=print_output)
+    config_delivery.deliver()
 
 if __name__ == "__main__":
     main()
