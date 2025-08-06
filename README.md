@@ -13,3 +13,5 @@
 # PersistentKeepalive = 25         # Default: off (optional, 25 is common for clients) -->
 
 <!-- /etc/wireguard/wg0.conf, sudo wg syncconf wg0 <(wg-quick strip wg0) -->
+
+Was essentially recreating https://github.com/h44z/wg-portal; use this project instead. Leaving this repo archived in case anyone wants to see the key and QR code generation logic.
